@@ -181,31 +181,16 @@ class InsightDetector:
         Fallback rule-based insight extraction.
         
         Use this as a simple baseline or fallback when LLM is not available.
+        
+        TODO: Implement your own keyword/pattern detection logic here.
+        Consider detecting:
+        - Financial metrics (revenue, margins, growth)
+        - Forward-looking statements (guidance, outlook)
+        - Risk indicators
+        - Sentiment signals
         """
-        insights: List[Insight] = []
-        text_lower = chunk.text.lower()
-        
-        # Financial keywords to detect
-        keywords = {
-            InsightType.REVENUE: ["revenue", "sales", "turnover", "top line"],
-            InsightType.GROWTH: ["growth", "grew", "increased", "rise", "up by"],
-            InsightType.MARGIN: ["margin", "ebitda", "profit", "bottom line"],
-            InsightType.GUIDANCE: ["expect", "outlook", "forecast", "guidance", "target"],
-            InsightType.RISK: ["risk", "challenge", "concern", "headwind", "difficult"],
-        }
-        
-        for insight_type, terms in keywords.items():
-            for term in terms:
-                if term in text_lower:
-                    insights.append(Insight(
-                        type=insight_type,
-                        text=f"Detected keyword: {term}",
-                        source_text=chunk.text,
-                        timestamp=chunk.start_time,
-                    ))
-                    break  # One insight per type per chunk
-        
-        return insights
+        # TODO: Implement rule-based extraction
+        raise NotImplementedError("TODO: Implement rule-based insight extraction")
     
     def get_final_summary(self) -> str:
         """
