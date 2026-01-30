@@ -1,0 +1,34 @@
+# Core dependencies
+python-dotenv>=1.0.0
+
+# Audio processing
+# Uncomment the ASR library you want to use:
+# openai-whisper>=20231117
+# faster-whisper>=0.10.0
+# speechrecognition>=3.10.0
+
+# Audio utilities
+pydub>=0.25.1
+soundfile>=0.12.1
+numpy>=1.24.0
+
+# LLM for insights (uncomment your choice)
+# openai>=1.0.0
+# anthropic>=0.18.0
+# google-generativeai>=0.4.0
+
+# Streaming output
+# For SSE:
+# sse-starlette>=1.6.0
+# fastapi>=0.109.0
+# uvicorn>=0.27.0
+
+# For WebSockets:
+# websockets>=12.0
+
+# Testing
+pytest>=7.4.0
+
+# Optional: Progress bars and CLI
+tqdm>=4.66.0
+rich>=13.7.0
