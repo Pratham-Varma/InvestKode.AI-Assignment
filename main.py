@@ -2,85 +2,101 @@
 """
 Real-Time Indian Concall Transcription & Insight Streaming
 
-Main entry point for the application.
+CLI entry point for the application.
+Supports both CLI processing and starting the FastAPI server.
 """
 
-import argparse
 import asyncio
 import os
 from pathlib import Path
 
+import typer
 from dotenv import load_dotenv
+from rich.console import Console
 
 # Load environment variables
 load_dotenv()
 
-
-def parse_args():
-    """Parse command line arguments."""
-    parser = argparse.ArgumentParser(
-        description="Real-Time Concall Transcription & Insight Streaming"
-    )
-    parser.add_argument(
-        "--audio",
-        type=str,
-        required=True,
-        help="Path to the audio file to process"
-    )
-    parser.add_argument(
-        "--chunk-duration",
-        type=float,
-        default=float(os.getenv("CHUNK_DURATION_SECONDS", "5")),
-        help="Duration of each audio chunk in seconds (default: 5)"
-    )
-    parser.add_argument(
-        "--output",
-        type=str,
-        choices=["console", "sse", "websocket"],
-        default="console",
-        help="Output streaming method (default: console)"
-    )
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=int(os.getenv("STREAMING_PORT", "8000")),
-        help="Port for SSE/WebSocket server (default: 8000)"
-    )
-    return parser.parse_args()
+# CLI app
+cli = typer.Typer(
+    name="concall",
+    help="Real-Time Concall Transcription & Insight Streaming",
+    add_completion=False,
+)
+console = Console()
 
 
-async def main():
-    """Main application entry point."""
-    args = parse_args()
+@cli.command()
+def serve(
+    host: str = typer.Option("0.0.0.0", "--host", "-h", help="Host to bind to"),
+    port: int = typer.Option(8000, "--port", "-p", help="Port to bind to"),
+    reload: bool = typer.Option(False, "--reload", "-r", help="Enable hot reload"),
+):
+    """Start the FastAPI server."""
+    import uvicorn
     
-    # Validate audio file exists
-    audio_path = Path(args.audio)
-    if not audio_path.exists():
-        print(f"Error: Audio file not found: {audio_path}")
-        return 1
+    console.print(f"[bold green]Starting server on {host}:{port}[/bold green]")
+    console.print("[dim]API docs available at /docs[/dim]")
     
-    print("=" * 60)
-    print("Real-Time Concall Transcription & Insight Streaming")
-    print("=" * 60)
-    print(f"Audio file: {audio_path}")
-    print(f"Chunk duration: {args.chunk_duration}s")
-    print(f"Output method: {args.output}")
-    print("=" * 60)
+    uvicorn.run(
+        "src.api.main:app",
+        host=host,
+        port=port,
+        reload=reload,
+    )
+
+
+@cli.command()
+def process(
+    audio: Path = typer.Argument(..., help="Path to the audio file to process"),
+    chunk_duration: float = typer.Option(
+        float(os.getenv("CHUNK_DURATION_SECONDS", "5")),
+        "--chunk-duration", "-c",
+        help="Duration of each audio chunk in seconds"
+    ),
+    output: str = typer.Option(
+        "console",
+        "--output", "-o",
+        help="Output method: console, json"
+    ),
+):
+    """
+    Process an audio file locally (CLI mode).
     
+    This runs the transcription and insight pipeline directly,
+    outputting results to the console.
+    """
+    if not audio.exists():
+        console.print(f"[bold red]Error:[/bold red] Audio file not found: {audio}")
+        raise typer.Exit(1)
+    
+    console.print("[bold blue]=" * 60 + "[/bold blue]")
+    console.print("[bold]Real-Time Concall Transcription & Insight Streaming[/bold]")
+    console.print("[bold blue]=" * 60 + "[/bold blue]")
+    console.print(f"[dim]Audio file:[/dim] {audio}")
+    console.print(f"[dim]Chunk duration:[/dim] {chunk_duration}s")
+    console.print(f"[dim]Output method:[/dim] {output}")
+    console.print("[bold blue]=" * 60 + "[/bold blue]\n")
+    
+    # Run the async processing
+    asyncio.run(_process_audio(audio, chunk_duration, output))
+
+
+async def _process_audio(audio_path: Path, chunk_duration: float, output: str):
+    """Process audio file asynchronously."""
     # TODO: Implement your solution here
     # 
     # Suggested flow:
     # 1. Initialize the transcription pipeline
     # 2. Initialize the insight detector
-    # 3. Initialize the output streamer
-    # 4. Process audio in chunks
-    # 5. For each chunk:
+    # 3. Process audio in chunks
+    # 4. For each chunk:
     #    a. Transcribe the audio chunk
     #    b. Detect insights from the transcript
-    #    c. Stream the results
+    #    c. Output the results
     
-    print("\n⚠️  TODO: Implement your solution!")
-    print("See the module files in src/ for implementation guidelines.\n")
+    console.print("[yellow]⚠️  TODO: Implement your solution![/yellow]")
+    console.print("[dim]See the module files in src/ for implementation guidelines.[/dim]\n")
     
     # Example skeleton (uncomment and modify as needed):
     # 
@@ -92,13 +108,20 @@ async def main():
     # detector = InsightDetector()
     # streamer = ConsoleStreamer()
     # 
-    # async for chunk in transcriber.process_audio(audio_path, args.chunk_duration):
+    # async for chunk in transcriber.process_audio(audio_path, chunk_duration):
     #     insights = await detector.analyze(chunk)
     #     await streamer.stream(chunk, insights)
-    
-    return 0
+    # 
+    # # Final summary
+    # summary = detector.get_final_summary()
+    # await streamer.stream_summary(summary)
+
+
+@cli.command()
+def version():
+    """Show version information."""
+    console.print("[bold]Concall Transcription[/bold] v0.1.0")
 
 
 if __name__ == "__main__":
-    exit_code = asyncio.run(main())
-    exit(exit_code)
+    cli()

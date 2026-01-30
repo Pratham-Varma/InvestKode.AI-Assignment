@@ -36,8 +36,8 @@ As transcript chunks arrive, generate:
 
 ### 3. Streaming Output
 Stream results using:
-- Console output, or
-- Backend endpoint (SSE, WebSockets, async generators)
+- **FastAPI with SSE** (Server-Sent Events) - Primary method
+- Console output for CLI mode
 
 ---
 
@@ -46,27 +46,26 @@ Stream results using:
 ```
 voice_ai_assignment/
 ├── src/
-│   ├── __init__.py
+│   ├── api/                    # FastAPI application
+│   │   ├── main.py             # API endpoints & SSE streaming
+│   │   └── schemas.py          # Pydantic models
 │   ├── transcription/          # Audio → Text pipeline
-│   │   ├── __init__.py
 │   │   └── transcriber.py      # Implement streaming transcription
 │   ├── insights/               # Real-time insight detection
-│   │   ├── __init__.py
 │   │   └── detector.py         # Implement insight extraction
 │   ├── streaming/              # Output streaming mechanisms
-│   │   ├── __init__.py
-│   │   └── streamer.py         # Implement streaming output
+│   │   └── streamer.py         # Console/WebSocket streamers
 │   └── utils/                  # Shared utilities
-│       ├── __init__.py
 │       └── audio_utils.py      # Audio processing helpers
 ├── data/
 │   └── samples/                # Place sample audio files here
 ├── tests/
-│   └── __init__.py
-├── main.py                     # Main entry point
-├── requirements.txt
+├── main.py                     # CLI entry point
+├── pyproject.toml              # Dependencies (uv compatible)
+├── Dockerfile                  # Production container
+├── Dockerfile.dev              # Development container
+├── docker-compose.yml          # Container orchestration
 ├── .env.example
-├── .gitignore
 └── README.md
 ```
 
@@ -75,38 +74,98 @@ voice_ai_assignment/
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Python 3.9+
-- pip or conda
+- Python 3.10+
+- [uv](https://github.com/astral-sh/uv) (recommended) or pip
+- Docker (optional)
 
-### Installation
+### Option 1: Local Development with uv (Recommended)
 
-1. Clone the repository:
 ```bash
+# Install uv if you haven't
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Clone the repository
 git clone <repository-url>
 cd voice_ai_assignment
+
+# Install dependencies
+uv sync
+
+# Optional: Install ASR and LLM packages
+uv sync --extra whisper --extra openai
+
+# Run the FastAPI server
+uv run python main.py serve
+
+# Or process a file directly
+uv run python main.py process data/samples/your_audio.wav
 ```
 
-2. Create a virtual environment:
+### Option 2: Docker
+
+```bash
+# Build and run production container
+docker-compose up --build
+
+# Or run development mode with hot reload
+docker-compose --profile dev up dev
+```
+
+### Option 3: Traditional pip
+
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -e .
+python main.py serve
 ```
 
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
+---
+
+## 🔌 API Endpoints
+
+Once running, the API is available at `http://localhost:8000`
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/docs` | GET | Interactive API documentation |
+| `/health` | GET | Health check |
+| `/upload` | POST | Upload audio file, returns job_id |
+| `/stream/{job_id}` | GET | SSE stream of transcription & insights |
+| `/status/{job_id}` | GET | Check job status |
+| `/job/{job_id}` | DELETE | Cancel a job |
+
+### SSE Event Types
+
+When subscribing to `/stream/{job_id}`, you'll receive:
+
+```
+event: transcript
+data: {"text": "...", "start_time": 0, "end_time": 5}
+
+event: insight
+data: {"type": "revenue", "text": "...", "sentiment": "positive"}
+
+event: summary
+data: {"summary": "Rolling summary..."}
+
+event: complete
+data: {"status": "completed", "final_summary": "..."}
 ```
 
-4. Set up environment variables:
-```bash
-cp .env.example .env
-# Edit .env with your API keys if needed
-```
+---
 
-### Running the Application
+## 🖥️ CLI Usage
 
 ```bash
-python main.py --audio data/samples/your_audio.wav
+# Start the server
+uv run python main.py serve --port 8000 --reload
+
+# Process audio file locally
+uv run python main.py process audio.wav --chunk-duration 5
+
+# Show help
+uv run python main.py --help
 ```
 
 ---
@@ -175,8 +234,8 @@ We'll evaluate:
 
 - [OpenAI Whisper](https://github.com/openai/whisper)
 - [Faster Whisper](https://github.com/guillaumekln/faster-whisper)
-- [Python SSE](https://pypi.org/project/sse-starlette/)
-- [WebSockets in Python](https://websockets.readthedocs.io/)
+- [FastAPI SSE](https://github.com/sysid/sse-starlette)
+- [uv - Fast Python Package Manager](https://github.com/astral-sh/uv)
 
 ---
 

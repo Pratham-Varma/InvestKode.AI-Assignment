@@ -26,6 +26,10 @@ wheels/
 .installed.cfg
 *.egg
 
+# uv
+.uv/
+uv.lock
+
 # IDE
 .vscode/
 .idea/
@@ -63,3 +67,9 @@ models/
 *.flac
 !data/samples/*.wav
 !data/samples/*.mp3
+
+# Uploads directory
+data/uploads/
+
+# Docker
+.docker/
