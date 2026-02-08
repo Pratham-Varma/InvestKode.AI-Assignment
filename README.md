@@ -1,8 +1,6 @@
 # Real-Time Indian Concall Transcription & Insight Streaming
 
 **Assignment Submission for Voice AI Engineer Position**  
-**Submitted by:** Pratham Varma  
-**Email:** prathamvarma2011@gmail.com  
 **Repository:** https://github.com/Pratham-Varma/InvestKode.AI-Assignment.git
 
 ---
@@ -437,14 +435,4 @@ Both modes have been tested with the provided sample audio files:
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [Server-Sent Events (SSE)](https://github.com/sysid/sse-starlette)
 - [uv Package Manager](https://github.com/astral-sh/uv)
-
----
-
-## 📬 Contact
-
-**Pratham Varma**  
-Email: prathamvarma2011@gmail.com  
-GitHub: https://github.com/Pratham-Varma
-
----
 
