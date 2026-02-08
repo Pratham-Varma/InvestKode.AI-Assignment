@@ -28,7 +28,6 @@ wheels/
 
 # uv
 .uv/
-uv.lock
 
 # IDE
 .vscode/
@@ -70,6 +69,9 @@ models/
 
 # Uploads directory
 data/uploads/
+
+# Generated outputs (keep directory structure)
+data/outputs/*.json
 
 # Docker
 .docker/

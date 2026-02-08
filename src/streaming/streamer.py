@@ -122,6 +122,89 @@ class ConsoleStreamer(BaseStreamer):
         print(summary)
         print(f"{'=' * 50}\n")
     
+    async def stream_final_insights(self, insights: list, summary: str, audio_filename: str = None) -> None:
+        """Stream final insights with details and save to JSON file."""
+        import json
+        import uuid
+        from datetime import datetime
+        from pathlib import Path
+        
+        print(f"\n{'=' * 70}")
+        print("📋 FINAL SUMMARY & INSIGHTS")
+        print(f"{'=' * 70}")
+        print(f"\n{summary}\n")
+        
+        if insights:
+            print(f"\n{'─' * 70}")
+            print(f"📊 DETAILED INSIGHTS ({len(insights)} total):\n")
+            
+            # Group insights by type
+            from collections import defaultdict
+            insights_by_type = defaultdict(list)
+            for insight in insights:
+                insights_by_type[insight.type].append(insight)
+            
+            # Display each type
+            for insight_type, type_insights in insights_by_type.items():
+                print(f"\n  [{insight_type.value.upper()}] ({len(type_insights)} mentions):")
+                for i, insight in enumerate(type_insights[:5], 1):  # Show first 5 of each type
+                    sentiment_emoji = "📈" if insight.sentiment.value == "positive" else "📉" if insight.sentiment.value == "negative" else "➡️"
+                    # Show full text, but limit to reasonable length for console
+                    display_text = insight.text if len(insight.text) <= 150 else insight.text[:147] + "..."
+                    print(f"    {i}. {sentiment_emoji} {display_text}")
+                    confidence_pct = f"{insight.confidence*100:.0f}%" if insight.confidence else "N/A"
+                    print(f"       └─ Time: {insight.timestamp:.1f}s | Sentiment: {insight.sentiment.value} | Confidence: {confidence_pct}")
+                
+                if len(type_insights) > 5:
+                    print(f"    ... and {len(type_insights) - 5} more")
+            
+            print(f"\n{'─'  * 70}")
+            
+            # Save to JSON file
+            output_dir = Path("data/outputs")
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Generate filename: <audio_filename>-insights-<uuid>.json
+            if audio_filename:
+                # Extract basename without extension
+                audio_base = Path(audio_filename).stem
+                unique_id = str(uuid.uuid4())[:8]
+                output_file = output_dir / f"{audio_base}-insights-{unique_id}.json"
+            else:
+                # Fallback to timestamp
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                output_file = output_dir / f"insights_{timestamp}.json"
+            
+            # Convert insights to dict
+            insights_data = {
+                "audio_file": str(audio_filename) if audio_filename else "unknown",
+                "summary": summary,
+                "total_insights": len(insights),
+                "insights": [
+                    {
+                        "type": insight.type.value,
+                        "text": insight.text,  # Full text, no truncation
+                        "sentiment": insight.sentiment.value,
+                        "timestamp": insight.timestamp,
+                        "confidence": insight.confidence if insight.confidence else 1.0,
+                    }
+                    for insight in insights
+                ],
+                "insights_by_type": {
+                    type_name.value: len(type_insights)
+                    for type_name, type_insights in insights_by_type.items()
+                }
+            }
+            
+            with open(output_file, 'w') as f:
+                json.dump(insights_data, f, indent=2)
+            
+            print(f"\n💾 Insights saved to: {output_file}")
+        else:
+            print("\nNo insights detected.")
+        
+        print(f"{'=' * 70}\n")
+    
     async def close(self) -> None:
         """Clean up (no-op for console)."""
         pass

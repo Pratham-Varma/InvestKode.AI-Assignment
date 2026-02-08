@@ -84,37 +84,46 @@ def process(
 
 async def _process_audio(audio_path: Path, chunk_duration: float, output: str):
     """Process audio file asynchronously."""
-    # TODO: Implement your solution here
-    # 
-    # Suggested flow:
-    # 1. Initialize the transcription pipeline
-    # 2. Initialize the insight detector
-    # 3. Process audio in chunks
-    # 4. For each chunk:
-    #    a. Transcribe the audio chunk
-    #    b. Detect insights from the transcript
-    #    c. Output the results
+    from src.transcription.transcriber import StreamingTranscriber
+    from src.insights.detector import InsightDetector
+    from src.streaming.streamer import ConsoleStreamer
+    from src.utils.device_utils import log_device_info
     
-    console.print("[yellow]⚠️  TODO: Implement your solution![/yellow]")
-    console.print("[dim]See the module files in src/ for implementation guidelines.[/dim]\n")
+    # Log device information
+    log_device_info()
     
-    # Example skeleton (uncomment and modify as needed):
-    # 
-    # from src.transcription.transcriber import StreamingTranscriber
-    # from src.insights.detector import InsightDetector
-    # from src.streaming.streamer import ConsoleStreamer
-    # 
-    # transcriber = StreamingTranscriber()
-    # detector = InsightDetector()
-    # streamer = ConsoleStreamer()
-    # 
-    # async for chunk in transcriber.process_audio(audio_path, chunk_duration):
-    #     insights = await detector.analyze(chunk)
-    #     await streamer.stream(chunk, insights)
-    # 
-    # # Final summary
-    # summary = detector.get_final_summary()
-    # await streamer.stream_summary(summary)
+    # Initialize components
+    console.print("[bold green]Initializing pipeline...[/bold green]")
+    transcriber = StreamingTranscriber(model_name=os.getenv("WHISPER_MODEL", "base"))
+    detector = InsightDetector(use_llm=True)
+    streamer = ConsoleStreamer()
+    
+    console.print("[bold green]Processing audio...[/bold green]\n")
+    
+    try:
+        # Process audio in chunks
+        async for chunk in transcriber.process_audio(audio_path, chunk_duration):
+            # Detect insights
+            result = await detector.analyze(chunk)
+            
+            # Stream results
+            await streamer.stream(chunk, result)
+        
+        # Final summary
+        console.print("\n")
+        final_summary = detector.get_final_summary()
+        all_insights = detector.get_key_insights()
+        await streamer.stream_final_insights(all_insights, final_summary, audio_filename=audio_path)
+        
+        console.print(f"\n[bold green]✓ Processing complete![/bold green]")
+        
+    except Exception as e:
+        console.print(f"[bold red]Error during processing: {e}[/bold red]")
+        import traceback
+        console.print(traceback.format_exc())
+        raise typer.Exit(1)
+    finally:
+        await streamer.close()
 
 
 @cli.command()
