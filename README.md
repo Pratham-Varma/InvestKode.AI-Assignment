@@ -90,42 +90,7 @@ The system simulates real-time streaming by processing audio in fixed-duration c
 3. **Progressive Output** → Results streamed immediately after each chunk
 4. **Stateful Context** → Conversation history maintained for context-aware insights
 
-### API Mode (Server-Sent Events)
 
-```bash
-# Client uploads audio and receives job_id
-POST /upload
-
-# Subscribe to SSE stream
-GET /stream/{job_id}
-
-# Receive events as processing happens:
-event: transcript
-data: {"text": "...", "start_time": 0, "end_time": 10}
-
-event: insight  
-data: {"type": "revenue", "text": "...", "sentiment": "positive"}
-
-event: summary
-data: {"summary": "Rolling summary of call so far..."}
-
-event: complete
-data: {"status": "completed", "final_summary": "...", "output_file": "..."}
-```
-
-### CLI Mode
-
-```bash
-uv run python main.py process data/samples/gulf_oil_india_concall.wav
-
-# Outputs:
-# - Progressive transcript chunks to console
-# - Detected insights with sentiment
-# - Rolling summary
-# - Final summary and JSON file saved to data/outputs/
-```
-
----
 
 ## 🚀 Getting Started
 
@@ -483,12 +448,3 @@ GitHub: https://github.com/Pratham-Varma
 
 ---
 
-## 📄 License
-
-MIT
-
----
-
-**Thank you for reviewing my submission!** 🚀
-
-Despite the compressed timeline, I aimed to deliver a production-ready architecture with clean code, comprehensive documentation, and thoughtful design decisions. I look forward to discussing this implementation and potential improvements.
